@@ -11,8 +11,6 @@ import {
   PermissionsAndroid
 } from 'react-native';
 
-import { CameraRoll,SaveToCameraRollOptions } from "@react-native-camera-roll/camera-roll";
-
 function App(): JSX.Element {
   const [imagePath, setImagePath] = useState<string>('');
   const devices = useCameraDevices();
@@ -49,21 +47,12 @@ function App(): JSX.Element {
     const status = await PermissionsAndroid.request(permission);
     return status === 'granted';
   }
-  
-  async function savePicture(tag:string) {
-    if (Platform.OS === "android" && !(await hasPermission())) {
-      return;
-    }
-  
-    CameraRoll.save(tag)
-  };
 
   const takePicture = async () => {
     if (camera.current) {
       const image = await camera.current.takePhoto();
       console.log(image?.path);
       setImagePath('file://' + image.path);
-      savePicture('file://' + image.path);
     }
   };
 
