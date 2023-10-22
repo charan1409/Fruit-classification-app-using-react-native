@@ -1,5 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Camera, useCameraDevices } from 'react-native-vision-camera';
+/**
+ * Sample React Native App
+ * https://github.com/facebook/react-native
+ *
+ * @format
+ */
+
+import React, {useState, useEffect, useRef} from 'react';
+import {Camera, useCameraDevices} from 'react-native-vision-camera';
 import {
   SafeAreaView,
   StyleSheet,
@@ -7,9 +14,8 @@ import {
   Image,
   TouchableOpacity,
   View,
-  Platform,
-  PermissionsAndroid
 } from 'react-native';
+import Icon from 'react-native-vector-icons/FontAwesome';
 
 function App(): JSX.Element {
   const [imagePath, setImagePath] = useState<string>('');
@@ -20,7 +26,6 @@ function App(): JSX.Element {
 
   useEffect(() => {
     checkPermission();
-    hasPermission();
   }, []);
 
   const checkPermission = async () => {
@@ -28,27 +33,14 @@ function App(): JSX.Element {
     console.log(newCameraPermission);
   };
 
-  if (device == null) {
+  if (device == null)
     return (
-      <View>
-        <Text>no camera</Text>
+      <View style={styles.initializingContainer}>
+        <Text style={styles.initializingText}>Initializing...</Text>
       </View>
     );
-  }
 
-  async function hasPermission() {
-    const permission = Number(Platform.Version) >= 33 ? PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES : PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE;
-  
-    const hasPermission = await PermissionsAndroid.check(permission);
-    if (hasPermission) {
-      return true;
-    }
-  
-    const status = await PermissionsAndroid.request(permission);
-    return status === 'granted';
-  }
-
-  const takePicture = async () => {
+  const takePhoto = async () => {
     if (camera.current) {
       const image = await camera.current.takePhoto();
       console.log(image?.path);
@@ -60,17 +52,38 @@ function App(): JSX.Element {
     <SafeAreaView style={styles.container}>
       {imagePath !== '' ? (
         <View style={styles.container}>
-          <Image source={{ uri: 'file://' + imagePath }} style={styles.imageContainer} />
+          <Image
+            source={{uri: 'file://' + imagePath}}
+            style={styles.imageContainer}
+          />
           <TouchableOpacity onPress={() => setImagePath('')}>
             <Text style={styles.resultText}>Take another picture</Text>
           </TouchableOpacity>
         </View>
       ) : (
-        <View style={styles.container}>
-          <Camera ref={camera} style={styles.camera} device={device} isActive={true} photo />
-          <TouchableOpacity onPress={takePicture}>
-            <View style={styles.clickButton} />
-          </TouchableOpacity>
+        <View style={styles.mainContainer}>
+          <View style={styles.cameraContainer}>
+            <Camera
+              ref={camera}
+              style={{flex: 1}}
+              device={device!}
+              isActive={true}
+              photo={true}
+            />
+          </View>
+          <View style={styles.optionsContainer}>
+            <TouchableOpacity style={styles.rectangleButton}>
+              <View style={{width: 40, height: 40, borderRadius: 5}}>
+                <Icon name="image" size={30} color="#fff" />
+              </View>
+              <Text style={{color: '#f1f1f1', fontSize: 18}}>Gallery</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.circleButton} onPress={takePhoto}>
+              <View style={styles.innerCircle}>
+                <Icon name="camera" size={30} color="#333" />
+              </View>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
     </SafeAreaView>
@@ -78,20 +91,62 @@ function App(): JSX.Element {
 }
 
 const styles = StyleSheet.create({
+  initializingContainer: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '100%',
+  },
+  initializingText: {
+    fontSize: 24,
+  },
   container: {
     flex: 1,
   },
-  camera: {
+  mainContainer: {
     flex: 1,
+    flexDirection: 'column',
+    height: '100%',
+    width: '100%',
   },
-  clickButton: {
+  cameraContainer: {
+    flex: 0.85,
+    backgroundColor: '#f2f2f2',
+  },
+  optionsContainer: {
+    flex: 0.15,
+    backgroundColor: '#333',
+    paddingLeft: 30,
+    paddingTop: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    gap: 20,
+  },
+  rectangleButton: {
+    width: 70,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  circleButton: {
     width: 80,
     height: 80,
-    backgroundColor: '#FF0037',
-    borderRadius: 50,
-    position: 'absolute',
-    bottom: 50,
-    alignSelf: 'center',
+    borderRadius: 40,
+    backgroundColor: 'white',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 20,
+  },
+  innerCircle: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: 'white',
+    borderWidth: 4,
+    borderColor: '#333',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   imageContainer: {
     width: 250,
