@@ -7,6 +7,7 @@
 
 import React, {useState, useEffect, useRef} from 'react';
 import {Camera, useCameraDevices} from 'react-native-vision-camera';
+import { launchImageLibrary } from 'react-native-image-picker';
 import {
   SafeAreaView,
   StyleSheet,
@@ -48,6 +49,19 @@ function App(): JSX.Element {
     }
   };
 
+  const openGallery = async () => {
+    launchImageLibrary({mediaType: 'photo'}, (response) => {
+      if (response.didCancel) {
+        console.log('User cancelled image picker');
+      } else if (response.errorCode) {
+        console.log('ImagePicker Error: ', response.errorMessage);
+      } else {
+        console.log(response.assets?.[0]?.uri);
+        setImagePath(response.assets?.[0]?.uri ?? '');
+      }
+    });
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       {imagePath !== '' ? (
@@ -72,7 +86,7 @@ function App(): JSX.Element {
             />
           </View>
           <View style={styles.optionsContainer}>
-            <TouchableOpacity style={styles.rectangleButton}>
+            <TouchableOpacity style={styles.rectangleButton} onPress={openGallery}>
               <View style={{width: 40, height: 40, borderRadius: 5}}>
                 <Icon name="image" size={30} color="#fff" />
               </View>
