@@ -7,7 +7,7 @@
 
 import React, {useState, useEffect, useRef} from 'react';
 import {Camera, useCameraDevices} from 'react-native-vision-camera';
-import { launchImageLibrary } from 'react-native-image-picker';
+import {launchImageLibrary} from 'react-native-image-picker';
 import {
   SafeAreaView,
   StyleSheet,
@@ -17,17 +17,47 @@ import {
   View,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import axios from 'axios';
 
 function App(): JSX.Element {
   const [imagePath, setImagePath] = useState<string>('');
+  const [fruitName, setFruitName] = useState<string>('');
   const devices = useCameraDevices();
   const device = devices.back;
 
   const camera = useRef<Camera>(null);
+  const uploadImage = async () => {
+    if (imagePath !== '') {
+      const formData = new FormData();
+      formData.append('image', {
+        uri: imagePath,
+        name: 'image',
+        type: 'image/jpg',
+      });
+      try {
+        const response = axios.post(
+          'https://classifierbtp.onrender.com/upload',
+          formData,
+          {
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'multipart/form-data',
+            },
+          },
+        ).then((response) => {
+          console.log(response.data)
+          setFruitName(response.data.name);
+        });
+      } catch (error) {
+        console.log(error);
+      }
+    }
+  };
 
   useEffect(() => {
     checkPermission();
-  }, []);
+    uploadImage();
+  }, [imagePath]);
 
   const checkPermission = async () => {
     const newCameraPermission = await Camera.requestCameraPermission();
@@ -44,19 +74,17 @@ function App(): JSX.Element {
   const takePhoto = async () => {
     if (camera.current) {
       const image = await camera.current.takePhoto();
-      console.log(image?.path);
       setImagePath('file://' + image.path);
     }
   };
 
   const openGallery = async () => {
-    launchImageLibrary({mediaType: 'photo'}, (response) => {
+    launchImageLibrary({mediaType: 'photo'}, response => {
       if (response.didCancel) {
         console.log('User cancelled image picker');
       } else if (response.errorCode) {
         console.log('ImagePicker Error: ', response.errorMessage);
       } else {
-        console.log(response.assets?.[0]?.uri);
         setImagePath(response.assets?.[0]?.uri ?? '');
       }
     });
@@ -66,13 +94,14 @@ function App(): JSX.Element {
     <SafeAreaView style={styles.container}>
       {imagePath !== '' ? (
         <View style={styles.container}>
-          <Image
-            source={{uri: 'file://' + imagePath}}
-            style={styles.imageContainer}
-          />
-          <TouchableOpacity onPress={() => setImagePath('')}>
+          <Image source={{uri: imagePath}} style={styles.imageContainer} />
+          <TouchableOpacity onPress={() => {
+            setImagePath('')
+            setFruitName('')
+            }}>
             <Text style={styles.resultText}>Take another picture</Text>
           </TouchableOpacity>
+          <Text style={styles.nameText}>Result is: {fruitName ? fruitName : "Loading..."}</Text>
         </View>
       ) : (
         <View style={styles.mainContainer}>
@@ -86,7 +115,9 @@ function App(): JSX.Element {
             />
           </View>
           <View style={styles.optionsContainer}>
-            <TouchableOpacity style={styles.rectangleButton} onPress={openGallery}>
+            <TouchableOpacity
+              style={styles.rectangleButton}
+              onPress={openGallery}>
               <View style={{width: 40, height: 40, borderRadius: 5}}>
                 <Icon name="image" size={30} color="#fff" />
               </View>
@@ -173,6 +204,11 @@ const styles = StyleSheet.create({
     marginTop: 20,
     color: '#FF0037',
     fontSize: 20,
+  },
+  nameText: {
+    alignSelf: 'center',
+    marginTop: 20,
+    fontSize: 24,
   },
 });
 
